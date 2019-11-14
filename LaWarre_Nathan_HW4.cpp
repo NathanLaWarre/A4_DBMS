@@ -16,6 +16,7 @@ void addCustomer(sql::Statement * stmt);
 void addOrder(sql::Statement * stmt);
 void removeOrder(sql::Statement * stmt);
 void shipOrder(sql::Statement * stmt);
+void printPending(sql::Statement * stmt);
 
 using namespace std;
 
@@ -48,6 +49,7 @@ int main(void){
           shipOrder(stmt0);
         break;
         case 5:
+          printPending(stmt0);
         break;
         case 6:
         break;
@@ -86,6 +88,21 @@ int getUserInput(void){
 
   scanf("%d", &choice);
   return choice;
+}
+
+void printPending(sql::Statement * stmt){
+  string cusID, compName;
+  int orderID;
+  string pendquery = "SELECT O.CustomerID, C.CompanyName, C.Address, C.City, C.PostalCode, O.OrderID FROM orders O, customers C WHERE O.ShippedDate IS NULL";
+  sql::ResultSet * res = stmt->executeQuery(pendquery);
+  printf("CustomerID |                    CompanyName                   | OrderID |");
+
+  while(res->next()){
+    cusID = res->getString("CustomerID");
+    compName = res->getString("CompanyName");
+    orderID = res->getInt("OrderID");
+    cout<<"    "<<cusID<<"             "<<compName<<"         "<<orderID<<endl;
+  }
 }
 
 void shipOrder(sql::Statement * stmt){
