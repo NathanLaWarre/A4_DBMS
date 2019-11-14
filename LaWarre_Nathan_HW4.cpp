@@ -17,6 +17,7 @@ void addOrder(sql::Statement * stmt);
 void removeOrder(sql::Statement * stmt);
 void shipOrder(sql::Statement * stmt);
 void printPending(sql::Statement * stmt);
+void restockParts(sql::Statement * stmt);
 
 using namespace std;
 
@@ -52,6 +53,7 @@ int main(void){
           printPending(stmt0);
         break;
         case 6:
+          restockParts(stmt0);
         break;
         case 7:
           printf("Goodbye :) \n");
@@ -88,6 +90,29 @@ int getUserInput(void){
 
   scanf("%d", &choice);
   return choice;
+}
+
+void restockParts(sql::Statement * stmt){
+  try{
+    int prodID, numStock;
+    string restock;
+    printf("ProductID to restock: ");
+    scanf("%d", &prodID);
+
+    printf("Number of units to stock: ");
+    scanf("%d", &numStock);
+
+    restock = "UPDATE products SET UnitsInStock = " + to_string(numStock) + " WHERE ProductID = " + to_string(prodID);
+
+    stmt->executeUpdate(restock);
+
+    printf("Restocked\n");
+
+  }
+  catch(sql::SQLException &e){
+    cout<<__FILE__<<__FUNCTION__<<__LINE__<<endl;
+    cout<<e.what()<<e.getErrorCode()<<e.getSQLState()<<endl;
+  }
 }
 
 void printPending(sql::Statement * stmt){
