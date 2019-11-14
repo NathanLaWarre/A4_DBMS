@@ -15,6 +15,7 @@ int getUserInput(void);
 void addCustomer(sql::Statement * stmt);
 void addOrder(sql::Statement * stmt);
 void removeOrder(sql::Statement * stmt);
+void shipOrder(sql::Statement * stmt);
 
 using namespace std;
 
@@ -44,6 +45,7 @@ int main(void){
           removeOrder(stmt0);
         break;
         case 4:
+          shipOrder(stmt0);
         break;
         case 5:
         break;
@@ -84,6 +86,22 @@ int getUserInput(void){
 
   scanf("%d", &choice);
   return choice;
+}
+
+void shipOrder(sql::Statement * stmt){
+  try{
+    int id = 0;
+    string shipOrder = "";
+    printf("Order number to be shipped: ");
+    scanf("%d", &id);
+    shipOrder = "UPDATE orders SET ShippedDate = NOW() WHERE orderID = " + to_string(id);
+    stmt->executeUpdate(shipOrder);
+    printf("Order shipped\n");
+  }
+  catch(sql::SQLException &e){
+    cout<<__FILE__<<__FUNCTION__<<__LINE__<<endl;
+    cout<<e.what()<<e.getErrorCode()<<e.getSQLState()<<endl;
+  }
 }
 
 void removeOrder(sql::Statement * stmt){
