@@ -14,6 +14,7 @@
 int getUserInput(void);
 void addCustomer(sql::Statement * stmt);
 void addOrder(sql::Statement * stmt);
+void removeOrder(sql::Statement * stmt);
 
 using namespace std;
 
@@ -29,10 +30,7 @@ int main(void){
     sql::Statement * stmt3 = con->createStatement();
 
     sql::ResultSet * res = stmt0->executeQuery("SELECT * FROM customers");
-
-
-
-
+    srand(time(0));
     while(choice != 7){
       choice = getUserInput();
       switch(choice){
@@ -43,6 +41,7 @@ int main(void){
           addOrder(stmt0);
         break;
         case 3:
+          removeOrder(stmt0);
         break;
         case 4:
         break;
@@ -87,34 +86,105 @@ int getUserInput(void){
   return choice;
 }
 
+void removeOrder(sql::Statement * stmt){
+  try{
+    int id = 0;
+    string deletOrderDetails = "DELETE FROM order_details WHERE orderID = " + to_string(id);
+    string deleteOrder = "DELETE FROM orders WHERE orderID = " + to_string(id);
+    printf("Order ID to be removed: ");
+    scanf("%d", &id);
+
+    stmt->executeUpdate(deletOrderDetails);
+    stmt->executeUpdate(deleteOrder);
+
+    printf("Order Deleted\n");
+  }
+  catch(sql::SQLException &e){
+    cout<<__FILE__<<__FUNCTION__<<__LINE__<<endl;
+    cout<<e.what()<<e.getErrorCode()<<e.getSQLState()<<endl;
+  }
+}
+
 void addOrder(sql::Statement * stmt){
-  int prodID1 = 0, amount = 0, cusID = 0;
+  int shipVia = 1 + rand() % ((3+1)-1);
+  int empID = rand() % 10;
+  int prodID1 = 0, amount = 0, cusID = 0, id = 0, id2 = 0, price = 0;
   string discont = "";
   string query1;
+  string query2 = "SELECT MAX(OrderID) FROM orders";
+  string query3 = "SELECT MAX(ID) FROM order_details";
+  string query4 = "";
+  string addOrder = "";
+  string orderDetailsInsert = "";
+  string orderInsert = "";
   sql::ResultSet * res;
-  printf("Enter product ID you would like to order (must be a number): ");
-  scanf("%d", &prodID1);
-  query1 = "SELECT Discontinued FROM products WHERE ProductID = " + to_string(prodID1);
+  sql::ResultSet * res1;
+  sql::ResultSet * res2;
+  sql::ResultSet * res3;
+  try{
+    printf("Enter product ID you would like to order (must be a number): ");
+    scanf("%d", &prodID1);
+    query1 = "SELECT Discontinued FROM products WHERE ProductID = " + to_string(prodID1);
 
-  res = stmt->executeQuery(query1);
+    res = stmt->executeQuery(query1);
 
-  //get discontinue query
-  while(res->next()){
-    discont = res->getString("Discontinued");
+    //get discontinue query
+    while(res->next()){
+      discont = res->getString("Discontinued");
+    }
+
+    if(discont.compare("y")==0){
+      printf("Sorry, product is discontinued\n");
+      return;
+    }
+
+    printf("Number of units to order: ");
+    scanf("%d", &amount);
+
+    printf("Customer ID: ");
+    scanf("%d", &cusID);
+
+    query4 = "SELECT Unitprice FROM products WHERE ProductID = " + to_string(prodID1);
+
+    res1 = stmt->executeQuery(query2);
+    res2 = stmt->executeQuery(query3);
+    res3 = stmt->executeQuery(query4);
+
+    addOrder = "UPDATE products SET UnitsOnOrder = UnitsOnOrder + " + to_string(amount) + " WHERE ProductID = " + to_string(prodID1);
+    stmt->executeUpdate(addOrder);
+
+    while(res1->next()){
+      id = res1->getInt("MAX(OrderID)");
+    }
+    free(res1);
+
+    while(res2->next()){
+      id2 = res2->getInt("MAX(ID)");
+    }
+    free(res2);
+
+    while(res3->next()){
+      price = res3->getInt("UnitPrice");
+    }
+    free(res3);
+
+    id = id + 1;
+    id2 = id2 + 1;
+
+    orderDetailsInsert = "INSERT INTO order_details (ID, OrderID, ProductID, UnitPrice, Quantity) VALUES(" + to_string(id2) + ", " + to_string(id) + ", " + to_string(prodID1) + ", " + to_string(price) + ", " + to_string(amount) + ")";
+    orderInsert = "INSERT INTO orders (OrderID, CustomerID, EmployeeID, OrderDate, ShipVia) VALUES (" + to_string(id) + ", " + to_string(cusID) + ", " + to_string(empID) + ", " + to_string(shipVia) + ")";
+
+    stmt->execute("SET foreign_key_checks = 0");
+    stmt->execute(orderDetailsInsert);
+    stmt->execute(orderInsert);
+
+    printf("Order added\n");
   }
-
-  if(discont.compare("y")==0){
-    printf("Sorry, product is discontinued\n");
-    return;
+  catch(sql::SQLException &e){
+    cout<<__FILE__<<__FUNCTION__<<__LINE__<<endl;
+    cout<<e.what()<<e.getErrorCode()<<e.getSQLState()<<endl;
+    printf("\nI dont know how to insert the datetime values\n\n");
   }
-
-  printf("Number of units to order: ");
-  scanf("%d", &amount);
-
-  printf("Customer ID: ");
-  scanf("%d", &cusID);
-
-  
 
 }
 
